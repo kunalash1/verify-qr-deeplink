@@ -1,5 +1,5 @@
 const express = require("express");
-// const fetch = require("node-fetch");
+const fetch = require("node-fetch");
 const path = require("path");
 const { BASE_URL, CLIENT_ID } = require("./config");
 
