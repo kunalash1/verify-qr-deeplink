@@ -1,16 +1,85 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>VP Verify</title>
+<title>OpenID4VP Verification</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 </head>
-<body>
-  <h2>OpenID4VP Verification</h2>
-  <button id="verifyBtn">Verify</button>
-  <button id="qrBtn">Show QR</button>
-  <div id="qrContainer" style="margin-top:20px;"></div>
 
-  <!-- QR code generator library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="app.js"></script>
+<body>
+
+<h2>OpenID4VP Verification</h2>
+
+<button onclick="startVerification()">Show QR</button>
+
+<br><br>
+
+<canvas id="qrcode"></canvas>
+
+<pre id="result"></pre>
+
+<script>
+
+let requestId = null
+let txnId = null
+let polling = false
+
+async function startVerification(){
+
+  const res = await fetch("/generate-link", {
+    method: "POST"
+  })
+
+  const data = await res.json()
+
+  console.log("Generate response:", data)
+
+  requestId = data.requestId
+  txnId = data.txnId
+
+  if(!requestId || !txnId){
+    alert("Missing requestId or txnId")
+    return
+  }
+
+  QRCode.toCanvas(
+    document.getElementById("qrcode"),
+    data.deepLink,
+    { width:300 }
+  )
+
+  polling = true
+
+  pollStatus()
+}
+
+async function pollStatus(){
+
+  if(!polling) return
+
+  const res = await fetch(`/poll-status/${requestId}/${txnId}`)
+  const data = await res.json()
+
+  console.log("Status:", data)
+
+  if(data.status === "EXPIRED"){
+    polling = false
+    document.getElementById("result").innerText = "QR expired"
+    return
+  }
+
+  if(data.completed){
+    polling = false
+    document.getElementById("result").innerText =
+      JSON.stringify(data.result,null,2)
+    return
+  }
+
+  await new Promise(r => setTimeout(r,1000))
+
+  pollStatus()
+}
+
+</script>
+
 </body>
 </html>
