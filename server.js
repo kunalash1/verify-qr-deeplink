@@ -37,7 +37,7 @@ app.post("/generate-link", async (req, res) => {
                     path: ["$.type"],
                     filter: {
                       type: "object",
-                      pattern: "LandStatementCredential"
+                      pattern: "ECACredential"
                     }
                   }
                 ]
